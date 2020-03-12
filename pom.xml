@@ -8,7 +8,7 @@
 	<name>Money Transfer Service</name>
 	<properties>
 		<mockito.version>2.13.0</mockito.version>
-		<jackson.version>2.9.6</jackson.version>
+		<jackson.version>2.10.3</jackson.version>
 	</properties>
 	<build>
 		<sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
