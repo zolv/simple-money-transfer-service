@@ -3,14 +3,19 @@ package com.testbank.money.service;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Valid;
+import javax.validation.ValidationException;
+import javax.validation.Validator;
+
 import com.testbank.money.common.exception.InsufficientFunds;
-import com.testbank.money.common.exception.InvalidTransferAmountException;
 import com.testbank.money.common.exception.InvalidTransferException;
 import com.testbank.money.common.exception.UnsupportedExchange;
 import com.testbank.money.common.model.TransferStatus;
@@ -40,7 +45,7 @@ public class TransferService implements Service {
           TimeUnit.SECONDS,
           new LinkedTransferQueue<Runnable>());
 
-  public Transfer makeTransfer(Transfer newTransfer) throws InvalidTransferException {
+  public Transfer makeTransfer(@Valid final Transfer newTransfer) throws InvalidTransferException {
     this.validate(newTransfer);
     /*
      * Repository returns currently the same instance, but we cannot rely on it.
@@ -53,16 +58,15 @@ public class TransferService implements Service {
     return this.toDomain(persistedTransfer);
   }
 
-  private void validate(Transfer newTransfer) throws InvalidTransferException {
-    if (newTransfer.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new InvalidTransferAmountException(newTransfer);
-    }
-    if (newTransfer.getFromAccountId().equals(newTransfer.getToAccountId())) {
-      throw new InvalidTransferException(newTransfer);
+  private void validate(@Valid final Transfer newTransfer) throws InvalidTransferException {
+    final Validator validator = Context.get().getInstance(Validator.class.getSimpleName());
+    final Set<ConstraintViolation<@Valid Transfer>> violations = validator.validate(newTransfer);
+    if (!violations.isEmpty()) {
+      throw new ValidationException();
     }
   }
 
-  public Optional<Transfer> findById(String id) {
+  public Optional<Transfer> findById(final String id) {
     return this.getTransferRepository().findByIdentifier(id).map(this::toDomain);
   }
 
@@ -106,7 +110,7 @@ public class TransferService implements Service {
   }
 
   private void doTransfer(
-      AccountEntity fromAccount, AccountEntity toAccount, TransferEntity transfer)
+      final AccountEntity fromAccount, final AccountEntity toAccount, final TransferEntity transfer)
       throws UnsupportedExchange, InsufficientFunds {
     final ExchangeRateService exchangeRateService = this.getExchangeRateService();
 
@@ -133,7 +137,7 @@ public class TransferService implements Service {
     }
   }
 
-  private TransferEntity toEntity(Transfer newTransfer) {
+  private TransferEntity toEntity(final Transfer newTransfer) {
     return TransferEntity.builder()
         .id(newTransfer.getId())
         .fromAccountId(newTransfer.getFromAccountId())
@@ -144,7 +148,7 @@ public class TransferService implements Service {
         .build();
   }
 
-  private Transfer toDomain(TransferEntity newTransfer) {
+  private Transfer toDomain(final TransferEntity newTransfer) {
     return Transfer.builder()
         .id(newTransfer.getId())
         .fromAccountId(newTransfer.getFromAccountId())

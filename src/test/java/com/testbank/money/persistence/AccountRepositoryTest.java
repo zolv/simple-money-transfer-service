@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.testbank.money.common.model.Currency;
-import com.testbank.money.persistence.AccountRepository;
 import com.testbank.money.persistence.model.AccountEntity;
 
 public class AccountRepositoryTest {

@@ -30,30 +30,38 @@ public class Context {
 
   private final AtomicBoolean withBalance = new AtomicBoolean(false);
 
-  public void registerSingleton(String name, Service clazz) {
-    this.beans.put(name, () -> clazz);
+  public void registerSingleton(final String name, final Class<?> clazz) {
+    this.registerSingleton(name, createInstance(name, clazz));
   }
 
-  public void register(String name, Class<? extends Service> clazz) {
+  public void registerSingleton(final String name, final Object instance) {
+    this.beans.put(name, () -> instance);
+  }
+
+  public void register(final String name, final Class<?> clazz) {
     this.beans.put(
         name,
         () -> {
-          try {
-            return clazz.getDeclaredConstructor().newInstance();
-          } catch (InstantiationException
-              | IllegalAccessException
-              | IllegalArgumentException
-              | InvocationTargetException
-              | NoSuchMethodException
-              | SecurityException
-              | java.lang.InstantiationException e) {
-            log.error(e.getMessage(), e);
-            throw new InstantiationException(name, e);
-          }
+          return createInstance(name, clazz);
         });
   }
 
-  public <T extends Service> T getInstance(String name) throws InstantiationException {
+  private Object createInstance(final String name, final Class<?> clazz) {
+    try {
+      return clazz.getDeclaredConstructor().newInstance();
+    } catch (InstantiationException
+        | IllegalAccessException
+        | IllegalArgumentException
+        | InvocationTargetException
+        | NoSuchMethodException
+        | SecurityException
+        | java.lang.InstantiationException e) {
+      log.error(e.getMessage(), e);
+      throw new InstantiationException(name, e);
+    }
+  }
+
+  public <T> T getInstance(final String name) throws InstantiationException {
     return (T)
         Optional.ofNullable(this.beans.get(name))
             .orElseThrow(() -> new UnknownBeanException(name))
@@ -64,7 +72,7 @@ public class Context {
     return this.withBalance;
   }
 
-  public void setServerInstance(Javalin server) {
+  public void setServerInstance(final Javalin server) {
     this.serverInstance = server;
   }
 

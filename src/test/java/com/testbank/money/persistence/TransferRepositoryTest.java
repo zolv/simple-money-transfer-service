@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import com.testbank.money.common.model.Currency;
 import com.testbank.money.common.model.TransferStatus;
-import com.testbank.money.persistence.TransferRepository;
 import com.testbank.money.persistence.model.TransferEntity;
 
 public class TransferRepositoryTest {

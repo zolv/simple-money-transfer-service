@@ -2,6 +2,10 @@ package com.testbank.money;
 
 import java.util.Optional;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
 import com.testbank.money.api.controller.AccountController;
 import com.testbank.money.api.controller.TransferController;
 import com.testbank.money.api.model.AccountRequest;
@@ -22,11 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MoneyTransferApp {
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     start(8080, (args.length > 0) && args[0].contentEquals("withBalance"));
   }
 
-  public static void start(int port, boolean withBalance) {
+  public static void start(final int port, final boolean withBalance) {
     final Context context = Context.get();
 
     context.getWithBalance().set(withBalance);
@@ -40,6 +44,9 @@ public class MoneyTransferApp {
     context.registerSingleton(AccountController.class.getSimpleName(), new AccountController());
     context.registerSingleton(TransferController.class.getSimpleName(), new TransferController());
 
+    final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    context.registerSingleton(Validator.class.getSimpleName(), factory.getValidator());
+
     final JsonMapperService jsonMapper =
         Context.get().getInstance(JsonMapperService.class.getSimpleName());
     final AccountController accountController =
@@ -52,11 +59,11 @@ public class MoneyTransferApp {
 
     server.start(port);
     server.get(
-            "/",
-            ctx -> {
-              ctx.result("Hello Fellow! Your Simple Money Transfer Service is up and running");
-            });
-    
+        "/",
+        ctx -> {
+          ctx.result("Hello Fellow! Your Simple Money Transfer Service is up and running");
+        });
+
     server.post(
         "/accounts",
         ctx -> {
